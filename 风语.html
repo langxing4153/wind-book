@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>风之书 · 长风集 | 自然诗学全览</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: 'Segoe UI', 'PingFang SC', 'Roboto', 'Georgia', serif;
+            background: linear-gradient(145deg, #cfe9ff 0%, #e0d4ff 45%, #fff0f5 100%);
+            color: #2d3e4b;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 粒子画布背景 */
+        #windCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* 飘浮装饰物 */
+        .floating-petal {
+            position: fixed;
+            top: -20px;
+            left: 0;
+            font-size: 1.8rem;
+            pointer-events: none;
+            z-index: 2;
+            opacity: 0.5;
+            animation: driftPetal 18s linear infinite;
+            filter: blur(0.5px);
+        }
+        @keyframes driftPetal {
+            0% { transform: translateX(-10%) translateY(0) rotate(0deg); opacity: 0.3; }
+            20% { opacity: 0.7; }
+            80% { opacity: 0.6; }
+            100% { transform: translateX(110vw) translateY(30vh) rotate(360deg); opacity: 0.1; }
+        }
+        .floating-petal:nth-child(1) { animation-duration: 22s; font-size: 2rem; top: 15%; left: -5%; opacity: 0.4; }
+        .floating-petal:nth-child(2) { animation-duration: 28s; font-size: 1.4rem; top: 45%; animation-delay: -4s; }
+        .floating-petal:nth-child(3) { animation-duration: 19s; font-size: 1.2rem; top: 70%; animation-delay: -9s; }
+        .floating-petal:nth-child(4) { animation-duration: 32s; font-size: 2.3rem; top: 20%; animation-delay: -14s; opacity: 0.2; }
+        .floating-petal:nth-child(5) { animation-duration: 25s; font-size: 1.6rem; top: 85%; animation-delay: -3s; }
+
+        /* 摇曳草丛 */
+        .swaying-grass {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 120px;
+            pointer-events: none;
+            z-index: 3;
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            padding: 0 5%;
+        }
+        .blade {
+            width: 4px;
+            height: 70px;
+            background: linear-gradient(135deg, #bccea6, #9ebf8a);
+            border-radius: 40% 40% 20% 20%;
+            transform-origin: bottom center;
+            animation: swayBlade 3.2s infinite ease-in-out;
+            margin: 0 8px;
+            box-shadow: 0 1px 4px rgba(60, 40, 20, 0.1);
+        }
+        .blade::after {
+            content: "";
+            position: absolute;
+            top: -12px;
+            left: -3px;
+            width: 10px;
+            height: 16px;
+            background: radial-gradient(circle, #e2f0c4, #b7cf9b);
+            border-radius: 80% 20% 70% 30%;
+            transform: rotate(20deg);
+        }
+        .blade:nth-child(2) { height: 52px; animation-duration: 2.6s; background: #b8d0a0; }
+        .blade:nth-child(3) { height: 88px; animation-duration: 3.9s; background: #a8c290; }
+        .blade:nth-child(4) { height: 42px; animation-duration: 2.3s; background: #c2dfa4; }
+        .blade:nth-child(5) { height: 68px; animation-duration: 3.0s; background: #b1cb93; }
+        @keyframes swayBlade {
+            0% { transform: rotate(0deg); }
+            35% { transform: rotate(5deg); }
+            70% { transform: rotate(-4deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        /* 主滚动区域 */
+        .main-scroll {
+            position: relative;
+            z-index: 4;
+            width: 100%;
+            min-height: 100vh;
+        }
+
+        /* 毛玻璃卡片通用样式 */
+        .glass-card {
+            background: rgba(255, 250, 240, 0.55);
+            backdrop-filter: blur(12px);
+            border-radius: 48px;
+            padding: 2rem 2rem 2.5rem;
+            max-width: 1100px;
+            width: 90%;
+            margin: 2rem auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(255, 255, 245, 0.6);
+            border: 1px solid rgba(255, 255, 245, 0.6);
+            transition: all 0.2s;
+        }
+
+        /* 欢迎页 (首页封面) —— 内部包含导航栏 */
+        .welcome-section {
+            text-align: center;
+            margin-top: 2rem;
+        }
+        .badge {
+            font-size: 0.85rem;
+            letter-spacing: 4px;
+            background: rgba(140, 170, 160, 0.2);
+            display: inline-block;
+            padding: 0.2rem 1rem;
+            border-radius: 40px;
+            margin-bottom: 1rem;
+            color: #4c6f7e;
+        }
+        h1 {
+            font-size: 3.2rem;
+            font-weight: 300;
+            letter-spacing: 10px;
+            color: #3f5a6b;
+            text-shadow: 2px 2px 12px rgba(160, 200, 220, 0.4);
+            animation: gentleSway 6s infinite ease-in-out;
+        }
+        @keyframes gentleSway {
+            0%, 100% { transform: rotate(0deg) translateX(0); }
+            25% { transform: rotate(0.6deg) translateX(3px); }
+            75% { transform: rotate(-0.5deg) translateX(-2px); }
+        }
+        .subhead {
+            font-size: 1.1rem;
+            color: #6b8b9c;
+            margin: 0.8rem 0;
+            font-style: italic;
+        }
+        .scroll-hint {
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            color: #8aaebf;
+            letter-spacing: 1px;
+        }
+
+        /* 导航图标栏 (置于欢迎卡片内) */
+        .nav-icons {
+            display: flex;
+            justify-content: center;
+            gap: 1.2rem;
+            margin: 2rem 0 0.8rem;
+            flex-wrap: wrap;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 0.6rem 1.2rem;
+            min-width: 85px;
+            background: rgba(240, 248, 255, 0.6);
+            backdrop-filter: blur(4px);
+            border-radius: 60px;
+            transition: all 0.25s ease;
+            border: 1px solid rgba(255,255,210,0.5);
+        }
+        .nav-item:hover {
+            background: rgba(255, 250, 235, 0.9);
+            transform: translateY(-3px);
+        }
+        .nav-icon {
+            font-size: 1.9rem;
+            margin-bottom: 5px;
+        }
+        .nav-label {
+            font-size: 0.7rem;
+            font-weight: 400;
+            letter-spacing: 1px;
+            color: #4a6272;
+        }
+
+        /* 长文部分 (风的文章，内容充足) */
+        .long-article .article-title {
+            font-size: 1.8rem;
+            font-weight: 400;
+            margin-bottom: 1.5rem;
+            border-left: 5px solid #bdd4cf;
+            padding-left: 20px;
+            color: #3f6275;
+        }
+        .article-text p {
+            margin-bottom: 1.2rem;
+            line-height: 1.75;
+            text-align: justify;
+            font-size: 1rem;
+        }
+        .poem-block {
+            background: rgba(200, 220, 210, 0.3);
+            padding: 1.2rem 1.8rem;
+            border-radius: 48px;
+            margin: 1.5rem 0;
+            text-align: center;
+            font-style: italic;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+        .science-box {
+            background: rgba(220, 235, 240, 0.4);
+            border-radius: 32px;
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+        }
+
+        /* ---------- 全屏详情覆盖层 (完全覆盖整屏) ---------- */
+        .fullscreen-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 200;
+            background: rgba(200, 220, 235, 0.4);
+            backdrop-filter: blur(20px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0.2s, opacity 0.25s ease;
+            overflow-y: auto;
+        }
+        .fullscreen-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+        .fullscreen-card {
+            background: rgba(255, 250, 240, 0.88);
+            backdrop-filter: blur(24px);
+            border-radius: 56px;
+            width: 90%;
+            max-width: 1100px;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 2rem;
+            position: relative;
+            box-shadow: 0 30px 50px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 245, 215, 0.9);
+            animation: scaleFade 0.3s ease-out;
+        }
+        @keyframes scaleFade {
+            from { transform: scale(0.96); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .fs-back-btn {
+            position: absolute;
+            top: 1.2rem;
+            left: 1.2rem;
+            background: rgba(210, 225, 235, 0.8);
+            border: none;
+            font-size: 1.6rem;
+            width: 44px;
+            height: 44px;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #4a6370;
+            z-index: 10;
+        }
+        .fs-back-btn:hover {
+            background: rgba(180, 200, 210, 0.95);
+            transform: scale(0.96);
+        }
+        .fs-inner-nav {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 1rem 0 1.8rem;
+            flex-wrap: wrap;
+        }
+        .fs-nav-btn {
+            background: rgba(220, 235, 245, 0.7);
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #3d5f6e;
+        }
+        .fs-nav-btn.active {
+            background: #d4e3ed;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-bottom: 2px solid #8bb3c0;
+        }
+        .fs-content {
+            margin-top: 0.5rem;
+        }
+        .fs-page {
+            display: none;
+        }
+        .fs-page.active-fs {
+            display: block;
+            animation: fadeContent 0.25s;
+        }
+        @keyframes fadeContent {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fs-flex {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            align-items: center;
+        }
+        .fs-text {
+            flex: 1.2;
+        }
+        .fs-img {
+            flex: 0.8;
+            text-align: center;
+        }
+        .fs-img img {
+            width: 100%;
+            max-width: 280px;
+            border-radius: 32px;
+            box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+            border: 2px solid rgba(255,245,210,0.7);
+        }
+        .fs-title {
+            font-size: 1.9rem;
+            font-weight: 400;
+            color: #3f6275;
+            margin-bottom: 1rem;
+            border-left: 5px solid #aac7d4;
+            padding-left: 18px;
+        }
+        .fs-desc {
+            line-height: 1.7;
+            margin-bottom: 1rem;
+            color: #2e4a5c;
+            text-align: justify;
+        }
+        .fs-quote {
+            background: rgba(210, 230, 240, 0.5);
+            padding: 0.6rem 1rem;
+            border-radius: 28px;
+            font-style: italic;
+            display: inline-block;
+        }
+        @media (max-width: 720px) {
+            .fs-flex { flex-direction: column; text-align: center; }
+            .fs-title { border-left: none; border-bottom: 1px solid #cbdbe2; padding-left: 0; }
+            .glass-card { padding: 1.5rem; width: 95%; }
+            h1 { font-size: 2rem; letter-spacing: 5px; }
+            .fs-img img { max-width: 220px; }
+            .nav-icons { gap: 0.8rem; }
+            .nav-item { min-width: 70px; padding: 0.4rem 0.8rem; }
+            .nav-icon { font-size: 1.5rem; }
+        }
+
+        ::-webkit-scrollbar { width: 6px; background: #d9e2e9; }
+        ::-webkit-scrollbar-thumb { background: #b3ccda; border-radius: 10px; }
+        .hint {
+            position: fixed;
+            bottom: 16px;
+            right: 16px;
+            font-size: 0.65rem;
+            background: rgba(235,245,250,0.6);
+            padding: 4px 12px;
+            border-radius: 40px;
+            z-index: 5;
+            pointer-events: none;
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 飘浮装饰 -->
+    <div class="floating-petal">🍃</div>
+    <div class="floating-petal">🪶</div>
+    <div class="floating-petal">🌸</div>
+    <div class="floating-petal">✨</div>
+    <div class="floating-petal">🍂</div>
+    <div class="swaying-grass">
+        <div class="blade"></div><div class="blade"></div><div class="blade"></div>
+        <div class="blade"></div><div class="blade"></div><div class="blade"></div>
+    </div>
+    <canvas id="windCanvas"></canvas>
+
+    <!-- 主滚动区域：首页欢迎页（内含导航） + 长篇文章 -->
+    <div class="main-scroll">
+        <!-- 欢迎页卡片 + 导航栏 -->
+        <div class="glass-card welcome-section">
+            <div class="badge">🌬️ 风之书 · 长风集 🌬️</div>
+            <h1>风 · 无形之诗</h1>
+            <div class="subhead">流动 · 声音 · 记忆 · 远方</div>
+            <!-- 导航图标位于首页卡片下端 -->
+            <div class="nav-icons">
+                <div class="nav-item" data-chapter="origin">
+                    <div class="nav-icon">🌿</div>
+                    <div class="nav-label">初风·起源</div>
+                </div>
+                <div class="nav-item" data-chapter="elegance">
+                    <div class="nav-icon">📜</div>
+                    <div class="nav-label">风雅·诗章</div>
+                </div>
+                <div class="nav-item" data-chapter="season">
+                    <div class="nav-icon">🍂</div>
+                    <div class="nav-label">四季·风迹</div>
+                </div>
+                <div class="nav-item" data-chapter="heart">
+                    <div class="nav-icon">🕊️</div>
+                    <div class="nav-label">心风·聆听</div>
+                </div>
+            </div>
+            <div class="scroll-hint">↓ 向下滑动，走进风的世界 ↓</div>
+        </div>
+
+        <!-- 长文：风的科普与文化  (内容充实，确保可大幅滑动) -->
+        <div class="glass-card long-article">
+            <div class="article-title">🌬️ 风的起源：大地的呼吸</div>
+            <div class="article-text">
+                <p>风，是太阳照射地球引起的空气流动。温暖的气团上升，冷空气填补空缺，于是风诞生了。它塑造了雅丹地貌，搬运着撒哈拉的沙尘，也让太平洋的水汽成为喜马拉雅的降雪。从气象学看，风是地球的能量调节器；从诗学看，风是天地间最自由的旅人。</p>
+                <div class="poem-block">
+                    “解落三秋叶，能开二月花。过江千尺浪，入竹万竿斜。” —— 唐·李峤《风》
+                </div>
+                <p>中国古人将风分为八风：东风叫“明庶风”，南风叫“景风”，西风叫“阊阖风”，北风叫“广莫风”。每一种风对应节气与农事，蕴含古老智慧。科学测得：全球风能资源如果充分开发，可满足人类40%的电力需求，风车转动的不只是叶片，更是对可持续未来的咏叹。</p>
+            </div>
+        </div>
+
+        <div class="glass-card long-article">
+            <div class="article-title">📜 风雅千年 · 诗词中的气流</div>
+            <div class="article-text">
+                <p>中国文学中，风是最常见的意象。《诗经》首篇“关关雎鸠，在河之洲”已有“风”的教化之意，汉乐府“大风起兮云飞扬”气魄雄浑。李白写“长风万里送秋色”，苏轼写“一点浩然气，千里快哉风”，风成了文人情怀的载体。西方诗歌中，雪莱《西风颂》高呼“冬天来了，春天还会远吗？”，将风视为变革的力量。</p>
+                <div class="science-box">
+                    🌬️ 有趣的是：风的文学形象常随季节变化——春风温柔，夏风狂躁，秋风悲凉，冬风肃杀。这种通感跨越文化，成为人类共有的自然心理映射。
+                </div>
+                <p>日本俳句里， “初秋风，吹过古池畔，蛙跃水声闲”。 风连接着瞬间与永恒，让日常变得深邃。从古至今，风唤醒灵感，吹动书页，也吹拂着每一位读诗人的心。</p>
+            </div>
+        </div>
+
+        <div class="glass-card long-article">
+            <div class="article-title">🍃 四季风物 · 节气与风向</div>
+            <div class="article-text">
+                <p>春风（立春至谷雨）：解冻，迎春花、杏花次第开放，东南风带来太平洋的湿润；夏风（立夏至大暑）：常伴随雷暴，薰风来自海洋，也带来农作物最旺盛的生长期；秋风（立秋至霜降）：西风渐起，天高云淡，古语“秋高气爽”源于大陆高压控制；冬风（立冬至大寒）：西北风凛冽，干净而冷冽，吹走雾霾，让星空澄澈。每个季节的风，都是大地的信使。</p>
+                <div class="poem-block">
+                    “沾衣欲湿杏花雨，吹面不寒杨柳风。” —— 宋·志南<br>
+                    “何处秋风至？萧萧送雁群。” —— 唐·刘禹锡
+                </div>
+                <p>在传统农耕中，清明风至，万物生长；白露风起，稻谷催熟。风里藏着物候密码，也藏着祖辈的生存智慧。</p>
+            </div>
+        </div>
+
+        <div class="glass-card long-article">
+            <div class="article-title">🌀 风的聆听 · 声音与疗愈</div>
+            <div class="article-text">
+                <p>风铃、松涛、竹啸、浪声……风是天然的音乐家。心理学研究表明，适度的风声可降低皮质醇水平，帮助大脑进入放松状态。在户外，风穿过树林产生的白噪声，类似于婴儿在母体听到的血流声，带来原始的安全感。许多冥想课程专门录制“微风山谷”音轨，用于减压与正念练习。</p>
+                <p>闭上眼睛，想象自己站在旷野，任由风穿过发丝——那一刻，风不再是物理现象，而是内心的回响。风教会我们流动，不执着于形态，却无处不在。</p>
+                <div class="poem-block">
+                    “万物静观皆自得，四时佳兴与人同。” —— 程颢
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 全屏覆盖层 (整屏切换，带返回键) -->
+    <div id="fullscreenOverlay" class="fullscreen-overlay">
+        <div class="fullscreen-card">
+            <button class="fs-back-btn" id="closeFullscreen">←</button>
+            <!-- 内部小导航 -->
+            <div class="fs-inner-nav">
+                <button class="fs-nav-btn" data-chapter="origin">🌿 初风·起源</button>
+                <button class="fs-nav-btn" data-chapter="elegance">📜 风雅·诗章</button>
+                <button class="fs-nav-btn" data-chapter="season">🍂 四季·风迹</button>
+                <button class="fs-nav-btn" data-chapter="heart">🕊️ 心风·聆听</button>
+            </div>
+            <div class="fs-content">
+                <!-- 专题内容，均为风主题 -->
+                <div id="fsOrigin" class="fs-page">
+                    <div class="fs-flex">
+                        <div class="fs-text">
+                            <div class="fs-title">🌬️ 风的起源 · 流动的宇宙呼吸</div>
+                            <div class="fs-desc">风始于太阳辐射的不均匀加热。热空气膨胀上升，冷空气下沉补充，形成气压梯度力。科里奥利力让风偏转，造就信风带与西风带。从微观分子运动到全球大气环流，风将赤道的热量输送到极地，维持着生态平衡。人类早期文明多出现于季风区，风影响了农业、航海的进程。</div>
+                            <div class="fs-desc">在神话中，希腊有风神埃俄罗斯，中国有风伯飞廉。风是自然最慷慨的赠予，也是环境变化的敏感指针。如今，风力发电已占全球电力约7%，人类试图驯服这古老的力量。</div>
+                            <div class="fs-quote">“大风起兮云飞扬，威加海内兮归故乡。” —— 刘邦</div>
+                        </div>
+                        <div class="fs-img">
+                            <img src="https://picsum.photos/id/104/400/280" alt="风起云涌">
+                        </div>
+                    </div>
+                </div>
+                <div id="fsElegance" class="fs-page">
+                    <div class="fs-flex">
+                        <div class="fs-text">
+                            <div class="fs-title">📖 风雅千年 · 诗词歌赋中的气流</div>
+                            <div class="fs-desc">《诗经》中十五国风开创了风雅传统，风既是自然又是教化。唐诗宋词里，风蕴含万千情绪——“昨夜西风凋碧树”是孤独，“长风破浪会有时”是豪情，“清风明月无人管”是洒脱。日本和歌中也常见“风の便”，象征消息与缘分。</div>
+                            <div class="fs-desc">西方诗人拜伦的《西风颂》、华兹华斯的《水仙》写风对心灵的触动。风是通感的载体，让文字有了触觉和听觉。读风之诗，如立山巅，衣袂飘举。</div>
+                            <div class="fs-quote">“料峭春风吹酒醒，微冷，山头斜照却相迎。” —— 苏轼</div>
+                        </div>
+                        <div class="fs-img">
+                            <img src="https://picsum.photos/id/20/400/280" alt="古典书卷">
+                        </div>
+                    </div>
+                </div>
+                <div id="fsSeason" class="fs-page">
+                    <div class="fs-flex">
+                        <div class="fs-text">
+                            <div class="fs-title">🌸 四季风信 · 节气的流转诗篇</div>
+                            <div class="fs-desc">立春东风解冻，夏至熏风解愠，秋分西风扫暑，冬至北风凛冽。根据《礼记·月令》，八节之风各有名号。在乡间，人们靠风向来判断播种与收获。现代气象学将风划分为季风、海陆风、谷风、焚风等，每种风都塑造着独特地貌与生态。四季如风，风过留痕，岁月被雕琢成歌。</div>
+                            <div class="fs-desc">二十四番花信风，从梅花到楝花，风带来花期，也带走光阴。赏风即赏时，品味自然界最轻柔的刻度。</div>
+                            <div class="fs-quote">“春风如贵客，一到便繁华。” —— 袁枚</div>
+                        </div>
+                        <div class="fs-img">
+                            <img src="https://picsum.photos/id/15/400/280" alt="四季风景">
+                        </div>
+                    </div>
+                </div>
+                <div id="fsHeart" class="fs-page">
+                    <div class="fs-flex">
+                        <div class="fs-text">
+                            <div class="fs-title">🧘 心风 · 聆听与正念之息</div>
+                            <div class="fs-desc">风是最古老的音乐家。松涛、竹林、风铃、海浪——风声是天然的白噪音，能降低心率，促进深度休息。在正念练习中，观察风的流动相当于观察呼吸，让我们放下执念，回归此刻。古代修行者喜居风口，借风声修炼禅定。</div>
+                            <div class="fs-desc">心风疗法：想象自己是一枚叶子，被温暖的气流托起，烦恼随风散去。科学证明，自然风声有助于改善失眠与焦虑。风教我们柔软，却坚韧地穿越一切阻碍。</div>
+                            <div class="fs-quote">“清风徐来，水波不兴。” —— 苏轼《赤壁赋》</div>
+                        </div>
+                        <div class="fs-img">
+                            <img src="https://picsum.photos/id/123/400/280" alt="冥想与风">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="hint">✨ 鼠标轻移 · 风向随你流转 | 下滑阅读长文 ✨</div>
+
+    <script>
+        (function(){
+            // 粒子系统 (唯美风动交互)
+            const canvas = document.getElementById('windCanvas');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            const PARTICLE_COUNT = 85;
+            const MAX_SPEED = 0.75;
+            const MOUSE_RADIUS = 140;
+            const WIND_STRENGTH = 0.12;
+            let mouseX = null, mouseY = null;
+            let width, height;
+            let globalWindX = 0.05, globalWindY = 0.02;
+            let windTimer = 0;
+
+            class Particle {
+                constructor(x, y, vx, vy, radius) {
+                    this.x = x; this.y = y; this.vx = vx; this.vy = vy;
+                    this.radius = radius;
+                }
+            }
+            function initParticles() {
+                particles = [];
+                for (let i = 0; i < PARTICLE_COUNT; i++) {
+                    const radius = 2 + Math.random() * 5;
+                    const x = Math.random() * width;
+                    const y = Math.random() * height;
+                    const vx = (Math.random() - 0.5) * 0.4;
+                    const vy = (Math.random() - 0.5) * 0.4;
+                    particles.push(new Particle(x, y, vx, vy, radius));
+                }
+            }
+            function resizeCanvas() {
+                width = window.innerWidth;
+                height = window.innerHeight;
+                canvas.width = width;
+                canvas.height = height;
+                initParticles();
+            }
+            function handleMouseMove(e) {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+                if (mouseX < 0 || mouseX > width || mouseY < 0 || mouseY > height) {
+                    mouseX = mouseY = null;
+                }
+            }
+            function handleTouchMove(e) {
+                if (e.touches.length) {
+                    const touch = e.touches[0];
+                    mouseX = touch.clientX;
+                    mouseY = touch.clientY;
+                    if (mouseX < 0 || mouseX > width || mouseY < 0 || mouseY > height) mouseX = mouseY = null;
+                }
+            }
+            function handleMouseLeave() { mouseX = null; mouseY = null; }
+            function updateGlobalWind() {
+                windTimer += 0.005;
+                globalWindX = 0.04 * Math.sin(windTimer * 0.37) + 0.02 * Math.cos(windTimer * 0.23);
+                globalWindY = 0.02 * Math.sin(windTimer * 0.59) + 0.01 * Math.cos(windTimer * 0.41);
+                globalWindX = Math.min(0.12, Math.max(-0.12, globalWindX));
+                globalWindY = Math.min(0.1, Math.max(-0.1, globalWindY));
+            }
+            function updateParticles() {
+                for (let p of particles) {
+                    let accX = globalWindX * 0.06 + (Math.random() - 0.5) * 0.03;
+                    let accY = globalWindY * 0.06 + (Math.random() - 0.5) * 0.03;
+                    if (mouseX !== null && mouseY !== null) {
+                        const dx = p.x - mouseX, dy = p.y - mouseY;
+                        const distance = Math.hypot(dx, dy);
+                        if (distance < MOUSE_RADIUS && distance > 0.5) {
+                            const force = (1 - distance / MOUSE_RADIUS) * WIND_STRENGTH;
+                            const angle = Math.atan2(dy, dx);
+                            accX += Math.cos(angle) * force;
+                            accY += Math.sin(angle) * force;
+                        }
+                    }
+                    p.vx += accX; p.vy += accY;
+                    let spd = Math.hypot(p.vx, p.vy);
+                    if (spd > MAX_SPEED) { p.vx = (p.vx / spd) * MAX_SPEED; p.vy = (p.vy / spd) * MAX_SPEED; }
+                    p.x += p.vx; p.y += p.vy;
+                    if (p.x - p.radius < 0) { p.x = p.radius; p.vx = -p.vx * 0.92; }
+                    if (p.x + p.radius > width) { p.x = width - p.radius; p.vx = -p.vx * 0.92; }
+                    if (p.y - p.radius < 0) { p.y = p.radius; p.vy = -p.vy * 0.92; }
+                    if (p.y + p.radius > height) { p.y = height - p.radius; p.vy = -p.vy * 0.92; }
+                }
+            }
+            function drawParticles() {
+                ctx.clearRect(0, 0, width, height);
+                const grad = ctx.createLinearGradient(0, 0, width, height);
+                grad.addColorStop(0, 'rgba(210, 225, 245, 0.1)');
+                grad.addColorStop(1, 'rgba(245, 235, 250, 0.1)');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, width, height);
+                for (let p of particles) {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    let hue = 195, sat = 55 + Math.sin(p.x * 0.02) * 10, light = 70 + Math.cos(p.y * 0.02) * 8;
+                    ctx.fillStyle = `hsla(${hue}, ${sat}%, ${light}%, 0.65)`;
+                    ctx.fill();
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = "rgba(180, 210, 240, 0.5)";
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+            }
+            let breathPhase = 0;
+            function drawWindWisps() {
+                if (mouseX && mouseY) {
+                    ctx.save();
+                    ctx.globalCompositeOperation = 'lighter';
+                    for (let i = 0; i < 2; i++) {
+                        ctx.beginPath();
+                        const angle = performance.now() * 0.003 + i * Math.PI;
+                        const offsetX = Math.sin(angle) * 18, offsetY = Math.cos(angle * 0.7) * 12;
+                        ctx.moveTo(mouseX + offsetX, mouseY + offsetY);
+                        ctx.lineTo(mouseX - offsetX * 0.7, mouseY - offsetY * 0.6);
+                        ctx.lineWidth = 1.2;
+                        ctx.strokeStyle = `rgba(210, 230, 245, ${0.2 + Math.sin(Date.now() * 0.003) * 0.1})`;
+                        ctx.stroke();
+                    }
+                    ctx.restore();
+                }
+                ctx.beginPath();
+                breathPhase += 0.01;
+                const waveY = height * 0.85;
+                for (let i = 0; i <= 8; i++) {
+                    let x = 30 + i * 50, y = waveY + Math.sin(breathPhase + i * 0.8) * 6;
+                    ctx.lineTo(x, y);
+                }
+                ctx.strokeStyle = "rgba(170, 200, 220, 0.2)";
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            }
+            function animate() { updateGlobalWind(); updateParticles(); drawParticles(); drawWindWisps(); requestAnimationFrame(animate); }
+            window.addEventListener('resize', () => { resizeCanvas(); mouseX = mouseY = null; });
+            window.addEventListener('mousemove', handleMouseMove);
+            window.addEventListener('mouseleave', handleMouseLeave);
+            window.addEventListener('touchmove', handleTouchMove);
+            window.addEventListener('touchend', () => { mouseX = mouseY = null; });
+            resizeCanvas();
+            animate();
+
+            // 全屏覆盖层交互
+            const overlay = document.getElementById('fullscreenOverlay');
+            const closeBtn = document.getElementById('closeFullscreen');
+            const fsNavBtns = document.querySelectorAll('.fs-nav-btn');
+            const fsPages = {
+                origin: document.getElementById('fsOrigin'),
+                elegance: document.getElementById('fsElegance'),
+                season: document.getElementById('fsSeason'),
+                heart: document.getElementById('fsHeart')
+            };
+
+            function showFullscreen(chapter) {
+                Object.values(fsPages).forEach(p => p.classList.remove('active-fs'));
+                if (fsPages[chapter]) fsPages[chapter].classList.add('active-fs');
+                fsNavBtns.forEach(btn => {
+                    if (btn.getAttribute('data-chapter') === chapter) btn.classList.add('active');
+                    else btn.classList.remove('active');
+                });
+                overlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+            function hideFullscreen() {
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+
+            // 主页导航点击 (现在导航在欢迎卡片内)
+            const mainNavItems = document.querySelectorAll('.nav-item');
+            mainNavItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    const chapter = item.getAttribute('data-chapter');
+                    if (chapter) showFullscreen(chapter);
+                });
+            });
+            // 浮层内导航点击
+            fsNavBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const chapter = btn.getAttribute('data-chapter');
+                    if (chapter && fsPages[chapter]) {
+                        Object.values(fsPages).forEach(p => p.classList.remove('active-fs'));
+                        fsPages[chapter].classList.add('active-fs');
+                        fsNavBtns.forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                    }
+                });
+            });
+            closeBtn.addEventListener('click', hideFullscreen);
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) hideFullscreen(); });
+        })();
+    </script>
+</body>
+</html>
